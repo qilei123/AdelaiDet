@@ -28,6 +28,7 @@ def setup_cfg(args):
     cfg.MODEL.FCOS.INFERENCE_TH_TEST = args.confidence_threshold
     cfg.MODEL.MEInst.INFERENCE_TH_TEST = args.confidence_threshold
     cfg.MODEL.PANOPTIC_FPN.COMBINE.INSTANCES_CONFIDENCE_THRESH = args.confidence_threshold
+    cfg.MODEL.WEIGHTS = '../output/fcos/R_50_1x_global_local_P2-P6_384X384_4gpus_60batch/model_0007999.pth'
     cfg.freeze()
     return cfg
 
@@ -36,15 +37,17 @@ def get_parser():
     parser = argparse.ArgumentParser(description="Detectron2 Demo")
     parser.add_argument(
         "--config-file",
-        default="configs/quick_schedules/e2e_mask_rcnn_R_50_FPN_inference_acc_test.yaml",
+        default="../configs/FCOS-Detection/R_50_1x.yaml",
         metavar="FILE",
         help="path to config file",
     )
     parser.add_argument("--webcam", action="store_true", help="Take inputs from webcam.")
     parser.add_argument("--video-input", help="Path to video file.")
-    parser.add_argument("--input", nargs="+", help="A list of space separated input images")
+    parser.add_argument("--input", default=['/data2/xinzi/SOLO/data/xiangya_histology/adenomatous_cropped/'],
+                        nargs="+", help="A list of space separated input images")
     parser.add_argument(
         "--output",
+        default='/data2/xinzi/SOLO/data/xiangya_histology/adenomatous_results/',
         help="A file or directory to save output visualizations. "
         "If not given, will show output in an OpenCV window.",
     )
@@ -98,6 +101,16 @@ if __name__ == "__main__":
                 else:
                     assert len(args.input) == 1, "Please specify a directory with args.output"
                     out_filename = args.output
+
+                # for drawing polyp pathology on image
+                # import numpy as np
+                # out_img = visualized_output.get_image()[:, :, ::-1]
+                # img_class = predictions['instances'].img_cls_pred.cpu().numpy()[0]
+                # classes_map = {0: 'Adenomatous', 1: 'non-Ade'}
+                # out_img = cv2.putText(out_img.astype(np.float32), classes_map[img_class], (5, 25),
+                #                       cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (255, 255, 0), 1)
+                # cv2.imwrite(out_filename, out_img)
+
                 visualized_output.save(out_filename)
             else:
                 cv2.imshow(WINDOW_NAME, visualized_output.get_image()[:, :, ::-1])

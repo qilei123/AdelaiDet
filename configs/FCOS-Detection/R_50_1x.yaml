@@ -1,8 +1,12 @@
 _BASE_: "Base-FCOS.yaml"
 MODEL:
-  WEIGHTS: "detectron2://ImageNetPretrained/MSRA/R-50.pkl"
+  WEIGHTS: "https://dl.fbaipublicfiles.com/detectron2/ImageNetPretrained/MSRA/R-50.pkl"
   RESNETS:
     DEPTH: 50
-INPUT:
-  MIN_SIZE_TRAIN: (800,)
-OUTPUT_DIR: "output/fcos/R_50_1x"
+SOLVER:
+  IMS_PER_BATCH: 128
+  MAX_ITER: 5000
+  WARMUP_ITERS: 200
+  CHECKPOINT_PERIOD: 500
+TEST:
+  EVAL_PERIOD: 500

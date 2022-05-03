@@ -2,10 +2,10 @@ import logging
 from torch import nn
 
 from detectron2.modeling.meta_arch.build import META_ARCH_REGISTRY
-from detectron2.modeling import ProposalNetwork, GeneralizedRCNN
+from adet.modeling.rcnn import ProposalNetwork, GeneralizedRCNN
 from detectron2.utils.events import get_event_storage
 from detectron2.utils.logger import log_first_n
-from detectron2.modeling.postprocessing import detector_postprocess as d2_postprocesss
+from adet.modeling.postprocessing import detector_postprocess as d2_postprocesss
 
 
 def detector_postprocess(results, output_height, output_width, mask_threshold=0.5):

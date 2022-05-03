@@ -24,14 +24,15 @@ def main(args):
 
     model = Trainer.build_model(cfg)
     model.eval().cuda()
-    input_size = (3, 512, 512)
+    input_size = (3, 320, 320)
     image = torch.zeros(*input_size)
     batched_input = {"image": image}
-    ops, params = measure_model(model, [batched_input])
+    out, ops, params = measure_model(model, [batched_input])
     print('ops: {:.2f}G\tparams: {:.2f}M'.format(ops / 2**30, params / 2**20))
 
 
 if __name__ == "__main__":
     args = default_argument_parser().parse_args()
-    print("Command Line Args:", args)
+    # args.config_file = '../configs/FCOS-Detection/R_50_1x.yaml'
+    args.config_file = '../configs/SOLOv2/R50_3x.yaml'
     main(args)

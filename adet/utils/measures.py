@@ -76,7 +76,7 @@ def measure_layer(layer, *args):
             delta_params = get_layer_param(conv) / layer.condense_factor
 
         ### ops_nonlinearity
-        elif type_name in ['ReLU', 'ReLU6']:
+        elif type_name in ['ReLU', 'ReLU6', 'Sigmoid']:
             delta_ops = x.numel()
             delta_params = get_layer_param(layer)
 

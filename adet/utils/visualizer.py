@@ -8,6 +8,8 @@ class TextVisualizer(Visualizer):
         beziers = predictions.beziers.numpy()
         scores = predictions.scores.tolist()
         recs = predictions.recs
+        classes = predictions.pred_classes.tolist()
+        print(classes)
 
         self.overlay_instances(beziers, recs, scores)
 

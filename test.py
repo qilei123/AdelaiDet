@@ -40,7 +40,8 @@ from detectron2.utils.logger import setup_logger
 from adet.data.dataset_mapper import DatasetMapperWithBasis
 from adet.config import get_cfg
 from adet.checkpoint import AdetCheckpointer
-from adet.evaluation import TextEvaluator
+from adet.evaluation import TextEvaluator, PolypEvaluator
+from thop import profile, clever_format
 
 
 class Trainer(DefaultTrainer):
@@ -48,6 +49,7 @@ class Trainer(DefaultTrainer):
     This is the same Trainer except that we rewrite the
     `build_train_loader`/`resume_or_load` method.
     """
+
     def resume_or_load(self, resume=True):
         if not isinstance(self.checkpointer, AdetCheckpointer):
             # support loading a few other backbones
@@ -112,37 +114,7 @@ class Trainer(DefaultTrainer):
         """
         if output_folder is None:
             output_folder = os.path.join(cfg.OUTPUT_DIR, "inference")
-        evaluator_list = []
-        evaluator_type = MetadataCatalog.get(dataset_name).evaluator_type
-        if evaluator_type in ["sem_seg", "coco_panoptic_seg"]:
-            evaluator_list.append(
-                SemSegEvaluator(
-                    dataset_name,
-                    distributed=True,
-                    num_classes=cfg.MODEL.SEM_SEG_HEAD.NUM_CLASSES,
-                    ignore_label=cfg.MODEL.SEM_SEG_HEAD.IGNORE_VALUE,
-                    output_dir=output_folder,
-                )
-            )
-        if evaluator_type in ["coco", "coco_panoptic_seg"]:
-            evaluator_list.append(COCOEvaluator(dataset_name, cfg, True, output_folder))
-        if evaluator_type == "coco_panoptic_seg":
-            evaluator_list.append(COCOPanopticEvaluator(dataset_name, output_folder))
-        if evaluator_type == "pascal_voc":
-            return PascalVOCDetectionEvaluator(dataset_name)
-        if evaluator_type == "lvis":
-            return LVISEvaluator(dataset_name, cfg, True, output_folder)
-        if evaluator_type == "text":
-            return TextEvaluator(dataset_name, cfg, True, output_folder)
-        if len(evaluator_list) == 0:
-            raise NotImplementedError(
-                "no Evaluator for the dataset {} with the type {}".format(
-                    dataset_name, evaluator_type
-                )
-            )
-        if len(evaluator_list) == 1:
-            return evaluator_list[0]
-        return DatasetEvaluators(evaluator_list)
+        return PolypEvaluator(dataset_name, cfg, True, output_folder)
 
     @classmethod
     def test_with_TTA(cls, cfg, model):
@@ -181,33 +153,29 @@ def setup(args):
 def main(args):
     cfg = setup(args)
 
-    if args.eval_only:
-        model = Trainer.build_model(cfg)
-        AdetCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
-            cfg.MODEL.WEIGHTS, resume=args.resume
-        )
-        res = Trainer.test(cfg, model) # d2 defaults.py
-        if comm.is_main_process():
-            verify_results(cfg, res)
-        if cfg.TEST.AUG.ENABLED:
-            res.update(Trainer.test_with_TTA(cfg, model))
-        return res
-
-    """
-    If you'd like to do anything fancier than the standard training logic,
-    consider writing your own training loop or subclassing the trainer.
-    """
-    trainer = Trainer(cfg)
-    trainer.resume_or_load(resume=args.resume)
+    model = Trainer.build_model(cfg)
+    dataloader = Trainer.build_test_loader(cfg, 'polyp_test')
+    
+    for i, inputs in enumerate(dataloader):
+        flops, params = profile(model, inputs=(inputs, ))
+        flops, params = clever_format([flops, params], "%.3f")
+        print(flops, params)
+    AdetCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
+        './output/fcos/R_50_1x_global_local_P2-P6_384X384_4gpus_60batch/model_0007999.pth', resume=args.resume
+    )
+    res = Trainer.test(cfg, model)  # d2 defaults.py
+    if comm.is_main_process():
+        verify_results(cfg, res)
     if cfg.TEST.AUG.ENABLED:
-        trainer.register_hooks(
-            [hooks.EvalHook(0, lambda: trainer.test_with_TTA(cfg, trainer.model))]
-        )
-    return trainer.train()
+        res.update(Trainer.test_with_TTA(cfg, model))
+    return res
 
 
 if __name__ == "__main__":
     args = default_argument_parser().parse_args()
+    args.config_file = './configs/FCOS-Detection/R_50_1x.yaml'
+    args.num_gpus = 2
+    args.OUTPUT_DIR = './training_dir/R_50_1x'
     print("Command Line Args:", args)
     launch(
         main,

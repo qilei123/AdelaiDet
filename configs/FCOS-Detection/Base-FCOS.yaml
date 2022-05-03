@@ -3,19 +3,35 @@ MODEL:
   BACKBONE:
     NAME: "build_fcos_resnet_fpn_backbone"
   RESNETS:
-    OUT_FEATURES: ["res3", "res4", "res5"]
+    OUT_FEATURES: ["res2", "res3", "res4", "res5"]
   FPN:
-    IN_FEATURES: ["res3", "res4", "res5"]
+    IN_FEATURES: ["res2", "res3", "res4", "res5"]
   PROPOSAL_GENERATOR:
     NAME: "FCOS"
+  FCOS:
+    NUM_CLASSES: 1
+    TOP_LEVELS: 1
+    IN_FEATURES: ["p2", "p3", "p4", "p5", "p6"]
+    FPN_STRIDES: [4, 8, 16, 32, 64]
+    SIZES_OF_INTEREST: [48, 96, 192, 256]
+    NMS_TH: 0.6
+    NORM: "SyncBN"
+    USE_LOCAL_FEATURE: True
+    # POS_RADIUS: 2.0
   # PIXEL_MEAN: [102.9801, 115.9465, 122.7717]
 DATASETS:
-  TRAIN: ("coco_2017_train",)
-  TEST: ("coco_2017_val",)
+  TRAIN: ("polyp_train",)
+  TEST: ("polyp_test",)
 SOLVER:
-  IMS_PER_BATCH: 16
-  BASE_LR: 0.01  # Note that RetinaNet uses a different default learning rate
-  STEPS: (60000, 80000)
+  WEIGHT_DECAY: 0.01
+  IMS_PER_BATCH: 128
+  WARMUP_ITERS: 100
+  # LR_SCHEDULER_NAME: 'WarmupCosineLR'
+  BASE_LR: 0.001  # Note that RetinaNet uses a different default learning rate
+  STEPS: (60000, 75000)
   MAX_ITER: 90000
 INPUT:
-  MIN_SIZE_TRAIN: (640, 672, 704, 736, 768, 800)
+  MIN_SIZE_TRAIN: (320, )
+  MAX_SIZE_TRAIN: 320
+  MIN_SIZE_TEST: 320
+  MAX_SIZE_TEST: 320

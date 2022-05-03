@@ -8,6 +8,7 @@ from detectron2.data.detection_utils import \
     annotations_to_instances as d2_anno_to_inst
 from detectron2.data.detection_utils import \
     transform_instance_annotations as d2_transform_inst_anno
+import albumentations as A
 
 
 def transform_instance_annotations(
@@ -75,7 +76,7 @@ def build_augmentation(cfg, is_train):
         list[Augmentation]
     """
     if is_train:
-        min_size = cfg.INPUT.MIN_SIZE_TRAIN
+        min_size = cfg.INPUT.MIN_SIZE_TRAIN[0]
         max_size = cfg.INPUT.MAX_SIZE_TRAIN
         sample_style = cfg.INPUT.MIN_SIZE_TRAIN_SAMPLING
     else:
@@ -89,8 +90,16 @@ def build_augmentation(cfg, is_train):
 
     logger = logging.getLogger(__name__)
 
-    augmentation = []
-    augmentation.append(T.ResizeShortestEdge(min_size, max_size, sample_style))
+    augmentation = [
+        T.RandomFlip(prob=0.5),
+        T.RandomBrightness(0.9, 1.1),
+        T.RandomContrast(0.9, 1.1),
+        T.RandomSaturation(0.9, 1.1),
+        T.RandomRotation(angle=[-10, 10]),
+        # T.RandomCrop("relative", (0.9, 0.9)),
+        # T.ResizeShortestEdge(min_size, max_size, sample_style)
+        T.Resize((min_size, max_size))
+    ]
     if is_train:
         if cfg.INPUT.HFLIP_TRAIN:
             augmentation.append(T.RandomFlip())
