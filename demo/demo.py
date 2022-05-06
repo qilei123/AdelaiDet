@@ -88,7 +88,7 @@ if __name__ == "__main__":
             img = read_image(path, format="BGR")
             start_time = time.time()
             predictions, visualized_output = demo.run_on_image(img)
-            print(predictions["instances"].type)
+            img_class = predictions['instances'].img_cls_pred.cpu().numpy()[0]
 
             '''
             logger.info(
