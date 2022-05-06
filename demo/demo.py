@@ -83,13 +83,17 @@ if __name__ == "__main__":
         elif len(args.input) == 1:
             args.input = glob.glob(os.path.expanduser(args.input[0]))
             assert args.input, "The input path(s) was not found"
+
+        count=0
+
         for path in tqdm.tqdm(args.input, disable=not args.output):
             # use PIL, to be consistent with evaluation
             img = read_image(path, format="BGR")
             start_time = time.time()
             predictions, visualized_output = demo.run_on_image(img)
             img_class = predictions['instances'].img_cls_pred.cpu().numpy()[0]
-
+            print(img_class)
+            count+=img_class
             '''
             logger.info(
                 "{}: detected {} instances in {:.2f}s".format(
