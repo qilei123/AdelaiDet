@@ -85,14 +85,14 @@ if __name__ == "__main__":
             assert args.input, "The input path(s) was not found"
 
         count=0
-
+        print(len(args.input))
         for path in tqdm.tqdm(args.input, disable=not args.output):
             # use PIL, to be consistent with evaluation
             img = read_image(path, format="BGR")
             start_time = time.time()
             predictions, visualized_output = demo.run_on_image(img)
             img_class = predictions['instances'].img_cls_pred.cpu().numpy()[0]
-            print(img_class)
+
             count+=img_class
             '''
             logger.info(
@@ -124,6 +124,9 @@ if __name__ == "__main__":
                 cv2.imshow(WINDOW_NAME, visualized_output.get_image()[:, :, ::-1])
                 if cv2.waitKey(0) == 27:
                     break  # esc to quit
+
+        print(len(args.input)-count)
+        print(count)
     elif args.webcam:
         assert args.input is None, "Cannot have both --input and --webcam!"
         cam = cv2.VideoCapture(0)
