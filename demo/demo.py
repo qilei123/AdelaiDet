@@ -88,7 +88,7 @@ if __name__ == "__main__":
             img = read_image(path, format="BGR")
             start_time = time.time()
             predictions, visualized_output = demo.run_on_image(img)
-            print(predictions["instances"])
+            print(predictions["instances"].image_class_pred)
             '''
             logger.info(
                 "{}: detected {} instances in {:.2f}s".format(
